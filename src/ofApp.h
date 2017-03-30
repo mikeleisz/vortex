@@ -25,9 +25,14 @@ class ofApp : public ofBaseApp{
     
     int w, h;
     
-    ofShader shader;
+    float downsampleAmt;
+    int ds_w, ds_h;
+    
+    ofShader geo_shader, blur_shader;
+    ofFbo blur_fbo;
     
     ofPlanePrimitive plane;
+    ofNode light;
     
     ofEasyCam cam;
     

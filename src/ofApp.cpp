@@ -10,6 +10,7 @@ void ofApp::setup(){
     
     ofSetWindowShape(w, h);
     ofSetFrameRate(framerate);
+    ofEnableDepthTest();
     
     ////////////////////////////////
     
@@ -33,7 +34,25 @@ void ofApp::setup(){
     
     ////////////////////////////////
     
-    shader.load("shaders/displace.vert", "shaders/basic.frag");
+    geo_shader.load("shaders/displace.vert", "shaders/basic.frag");
+    blur_shader.load("shaders/generic.vert", "shaders/gaussian.frag");
+    
+    ////////////////////////////////
+    
+    cam.setDistance(1280);
+    
+    ////////////////////////////////
+    
+    downsampleAmt = 1.0/32.0;
+    ds_w = movie.getWidth() * downsampleAmt;
+    ds_h = movie.getHeight() * downsampleAmt;
+    
+    blur_fbo.allocate(ds_w, ds_h, GL_RGB);
+    blur_fbo.setUseTexture(true);
+    
+    record_fbo.allocate(w, h, GL_RGB);
+    record_fbo.setUseTexture(true);
+    record_pix.allocate(w, h, 3);
     
     ////////////////////////////////
     
@@ -48,15 +67,7 @@ void ofApp::setup(){
     plane.mapTexCoordsFromTexture(movTex);
     plane.enableNormals();
     
-    ////////////////////////////////
-    
-    cam.setDistance(1280);
-    
-    ////////////////////////////////
-    
-    record_fbo.allocate(w, h, GL_RGB);
-    record_fbo.setUseTexture(true);
-    record_pix.allocate(w, h, 3);
+    light.setPosition(250,0,0);
 }
 
 //--------------------------------------------------------------
@@ -76,6 +87,15 @@ void ofApp::draw(){
     //record_fbo.begin();
     
     ////////////////////////////////
+    blur_fbo.begin();
+    blur_shader.begin();
+    
+    movie.draw(0, 0, ds_w, ds_h);
+    
+    blur_shader.end();
+    blur_fbo.end();
+    
+    ////////////////////////////////
     
     ofPushMatrix();
     
@@ -85,14 +105,17 @@ void ofApp::draw(){
     
     ////////////////////////////////
     
-    shader.begin();
-    shader.setUniform1f("time", ofGetElapsedTimef());
+    geo_shader.begin();
     
-    movTex.bind();
+    geo_shader.setUniform1f("time", ofGetElapsedTimef());
+    geo_shader.setUniform1f("downsampleAmt", downsampleAmt);
+    geo_shader.setUniform1f("displaceAmt", float(mouseX)/w * 10.0);
+    geo_shader.setUniformTexture("tex0", blur_fbo.getTexture(), 0);
+    geo_shader.setUniformTexture("tex1", movTex, 1);
+
     plane.draw();
-    movTex.unbind();
     
-    shader.end();
+    geo_shader.end();
     
     ////////////////////////////////
     
@@ -115,7 +138,7 @@ void ofApp::keyPressed(int key){
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-    shader.load("shaders/displace.vert", "shaders/basic.frag");
+    geo_shader.load("shaders/displace.vert", "shaders/basic.frag");
     
     if (key == 'r'){
         record = !record;
