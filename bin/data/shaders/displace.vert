@@ -1,20 +1,22 @@
 uniform mat4 modelViewMatrix;
 
-// the time value is passed into the shader by the OF app.
-uniform float time;
-
 uniform sampler2DRect tex0;
-uniform sampler2DRect tex1;
 
-vec2 texelWidth = vec2(1.0, 1.0);
+uniform float time;
 
 uniform float downsampleAmt;
 uniform float displaceAmt;
 
-mat3 rotate2d(float _angle1, float _angle2, float _angle3){
-    return mat3(cos(_angle1 + time),-sin(_angle1 + time), 0.0,
-                sin(_angle2 + time), cos(_angle2 + time), 0.0,
-                sin(_angle3 + time),-cos(_angle3 + time), 1.0);
+mat3 rotate3d(float _angle1, float _angle2, float _angle3){
+    return mat3(cos(_angle1),-sin(_angle1), 0.0,
+                sin(_angle2), cos(_angle2), 0.0,
+                sin(_angle3),-cos(_angle3), 1.0);
+}
+
+mat3 rotate3d(float _angle1, float _angle2, float _angle3, float _t){
+    return mat3(cos(_angle1 + _t),-sin(_angle1 + _t), 0.0,
+                sin(_angle2 + _t), cos(_angle2 + _t), 0.0,
+                sin(_angle3 + _t),-cos(_angle3 + _t), 1.0);
 }
 
 vec3 rgb2hsv(vec3 c)
@@ -32,14 +34,15 @@ vec3 rgb2hsv(vec3 c)
 void main() {
 	vec2 uv = gl_MultiTexCoord0.xy; //tex coords
 	uv *= mat2(downsampleAmt, 0.0, 0.0, downsampleAmt);
-	uv += vec2(0.5);
 
 	vec4 sourceColor = texture2DRect(tex0, uv);
 
     float df = (0.30*sourceColor.r + 0.59*sourceColor.g + 0.11*sourceColor.b);
 
     vec3 hsv = rgb2hsv(sourceColor.rgb);
-    vec3 norms = gl_Vertex.xyz * rotate2d(hsv.r, hsv.g, hsv.b);
+
+    vec3 norms = gl_Normal;
+    norms *= rotate3d(hsv.r, hsv.g, hsv.b, time);
 
   	vec4 newVertexPos = gl_Vertex + vec4(norms * df * displaceAmt, 0.0);
 

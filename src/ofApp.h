@@ -28,8 +28,11 @@ class ofApp : public ofBaseApp{
     float downsampleAmt;
     int ds_w, ds_h;
     
-    ofShader geo_shader, blur_shader;
-    ofFbo blur_fbo;
+    ofShader geo_shader, displace_shader, blur_shader;
+    ofFbo blur_fbo, displace_fbo;
+    
+    ofImage displacement_map;
+    ofTexture displaceTex;
     
     ofPlanePrimitive plane;
     ofNode light;

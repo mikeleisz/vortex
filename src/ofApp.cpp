@@ -10,7 +10,7 @@ void ofApp::setup(){
     
     ofSetWindowShape(w, h);
     ofSetFrameRate(framerate);
-    ofEnableDepthTest();
+    //ofToggleFullscreen();
     
     ////////////////////////////////
     
@@ -25,7 +25,6 @@ void ofApp::setup(){
     
     ////////////////////////////////
 
-    //ofQTKitDecodeMode decodeMode = OF_QTKIT_DECODE_TEXTURE_ONLY; //DEPRECATED
     movie.load("iphone_cap_1.mov");
     movie.setUseTexture(true);
     movie.play();
@@ -34,12 +33,12 @@ void ofApp::setup(){
     
     ////////////////////////////////
     
-    geo_shader.load("shaders/displace.vert", "shaders/basic.frag");
+    geo_shader.load("shaders/displace.vert", "shaders/displaceTex.frag");
     blur_shader.load("shaders/generic.vert", "shaders/gaussian.frag");
     
-    ////////////////////////////////
-    
-    cam.setDistance(1280);
+    displacement_map.load("Displacements.png");
+    displaceTex.allocate(displacement_map.getWidth(), displacement_map.getHeight(), GL_RGBA);
+    displaceTex.loadData(displacement_map.getPixels());
     
     ////////////////////////////////
     
@@ -67,7 +66,10 @@ void ofApp::setup(){
     plane.mapTexCoordsFromTexture(movTex);
     plane.enableNormals();
     
+    ////////////////////////////////
+    
     light.setPosition(250,0,0);
+    cam.setDistance(1280);
 }
 
 //--------------------------------------------------------------
@@ -87,6 +89,7 @@ void ofApp::draw(){
     //record_fbo.begin();
     
     ////////////////////////////////
+    
     blur_fbo.begin();
     blur_shader.begin();
     
@@ -97,21 +100,26 @@ void ofApp::draw(){
     
     ////////////////////////////////
     
+    ofEnableDepthTest();
     ofPushMatrix();
     
     cam.begin();
-    ofRotateX(ofRadToDeg(0.5));
-    ofRotateY(ofRadToDeg(-0.5));
+    //ofRotateX(ofRadToDeg(0.5));
+    //ofRotateY(ofRadToDeg(-0.5));
     
     ////////////////////////////////
     
     geo_shader.begin();
     
-    geo_shader.setUniform1f("time", ofGetElapsedTimef());
+    float t = int(ofGetElapsedTimef() * 100.0) % int(displaceTex.getWidth() * 0.5);
+    geo_shader.setUniform1f("time", t);
+    geo_shader.setUniform2f("resolution", movTex.getWidth(), movTex.getHeight());
+    
     geo_shader.setUniform1f("downsampleAmt", downsampleAmt);
-    geo_shader.setUniform1f("displaceAmt", float(mouseX)/w * 10.0);
+    geo_shader.setUniform1f("displaceAmt", float(mouseX)/w * 1000.0);
     geo_shader.setUniformTexture("tex0", blur_fbo.getTexture(), 0);
     geo_shader.setUniformTexture("tex1", movTex, 1);
+    geo_shader.setUniformTexture("tex2", displaceTex, 2);
 
     plane.draw();
     
@@ -122,6 +130,7 @@ void ofApp::draw(){
     cam.end();
     
     ofPopMatrix();
+    ofDisableDepthTest();
     
     ////////////////////////////////
     
