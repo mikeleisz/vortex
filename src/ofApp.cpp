@@ -10,6 +10,9 @@ void ofApp::setup(){
     
     ofSetWindowShape(w, h);
     ofSetFrameRate(framerate);
+    ofSetVerticalSync(true);
+    ofBackground(8, 8, 8);
+    ofEnableAntiAliasing();
     //ofToggleFullscreen();
     
     ////////////////////////////////
@@ -42,7 +45,7 @@ void ofApp::setup(){
     
     ////////////////////////////////
     
-    downsampleAmt = 1.0/32.0;
+    downsampleAmt = 1.0/64.0;
     ds_w = movie.getWidth() * downsampleAmt;
     ds_h = movie.getHeight() * downsampleAmt;
     
@@ -58,7 +61,7 @@ void ofApp::setup(){
     float planeScale = 0.75;
     int planeWidth = int(ofGetWidth() * planeScale * 9.0/16.0);
     int planeHeight = ofGetHeight() * planeScale;
-    int planeGridSize = 8;
+    int planeGridSize = 2;
     int planeColumns = planeWidth / planeGridSize;
     int planeRows = planeHeight / planeGridSize;
     
@@ -68,7 +71,6 @@ void ofApp::setup(){
     
     ////////////////////////////////
     
-    light.setPosition(250,0,0);
     cam.setDistance(1280);
 }
 
@@ -104,19 +106,23 @@ void ofApp::draw(){
     ofPushMatrix();
     
     cam.begin();
-    //ofRotateX(ofRadToDeg(0.5));
-    //ofRotateY(ofRadToDeg(-0.5));
+    ofRotateX(ofRadToDeg(3.14));
+    ofRotateX(ofRadToDeg(ofGetElapsedTimef() * 0.1));
+    ofRotateY(ofRadToDeg(ofGetElapsedTimef() * 0.25));
     
     ////////////////////////////////
     
     geo_shader.begin();
     
-    float t = int(ofGetElapsedTimef() * 100.0) % int(displaceTex.getWidth() * 0.5);
+    float t = int(ofGetElapsedTimef() * 50.0) % int(displaceTex.getWidth() * 0.5);
+    
+    geo_shader.setUniformMatrix4f("camPosition", cam.getModelViewMatrix());
     geo_shader.setUniform1f("time", t);
     geo_shader.setUniform2f("resolution", movTex.getWidth(), movTex.getHeight());
     
     geo_shader.setUniform1f("downsampleAmt", downsampleAmt);
-    geo_shader.setUniform1f("displaceAmt", float(mouseX)/w * 1000.0);
+    geo_shader.setUniform1f("displaceAmt", 350.0);
+    
     geo_shader.setUniformTexture("tex0", blur_fbo.getTexture(), 0);
     geo_shader.setUniformTexture("tex1", movTex, 1);
     geo_shader.setUniformTexture("tex2", displaceTex, 2);
@@ -125,6 +131,9 @@ void ofApp::draw(){
     
     geo_shader.end();
     
+    ////////////////////////////////
+    
+
     ////////////////////////////////
     
     cam.end();

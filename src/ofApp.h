@@ -35,7 +35,10 @@ class ofApp : public ofBaseApp{
     ofTexture displaceTex;
     
     ofPlanePrimitive plane;
-    ofNode light;
+    
+    ofLight pointLight;
+    ofLight directionalLight;
+    ofLight spotLight;
     
     ofEasyCam cam;
     
